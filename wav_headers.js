@@ -18,39 +18,35 @@ module.exports = function(RED) {
 
 	function WavHeadersNode(config) {
 		RED.nodes.createNode(this, config);
-    this.channels   = config.channels || 1;
+        this.channels   = config.channels || 1;
 		this.sampleRate = config.samplerate || 22050;
-    this.bitDepth   = config.bitwidth || 16;
+        this.bitDepth   = config.bitwidth || 16;
     
-    var node = this;
+        var node = this;
     
-    node.on("input", function(msg) {
-      var fileBodyBuffer = msg.payload || new Buffer();
+        node.on("input", function(msg) {
+            var fileBodyBuffer = msg.payload || new Buffer();
       
-      // The message payload should be a buffer
-      if (!Buffer.isBuffer(fileBodyBuffer)) {
-        return;
-      }
+            // The message payload should be a buffer
+            if (!Buffer.isBuffer(fileBodyBuffer)) {
+                return;
+            }
     
-      var options = { channels  : node.channels,
-                      sampleRate: node.sampleRate,
-                      bitDepth  : node.bitDepth,
-                      dataLength: fileBodyBuffer
-      };
+            var options = { channels  : node.channels,
+                            sampleRate: node.sampleRate,
+                            bitDepth  : node.bitDepth,
+                            dataLength: fileBodyBuffer
+            };
  
-      // Create a WAV headers buffer, based on the specified options
-      var headersBuffer = wavHeaders(options);
+            // Create a WAV headers buffer, based on the specified options
+            var headersBuffer = wavHeaders(options);
       
-      // Store a 'full' buffer in the message payload.
-      msg.payload = Buffer.concat([ headersBuffer, fileBodyBuffer ]);
+            // Store a 'full' buffer in the message payload.
+            msg.payload = Buffer.concat([ headersBuffer, fileBodyBuffer ]);
 
-      node.send(msg);
-    });
-
-	  node.on("close", function() {
-      // Nothing to cleanup
-	  }
-  }
+            node.send(msg);
+        });
+    }
   
 	RED.nodes.registerType("wav-headers", WavHeadersNode);
 }
