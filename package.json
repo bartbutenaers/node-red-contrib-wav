@@ -3,6 +3,7 @@
     "version"      : "1.0.0",
     "description"  : "A Node Red node to add WAV headers to PCM audio chunks",
     "dependencies": {
+        "wav-headers": "1.0.1"
     },
     "author": {
         "name": "Bart Butenaers"
