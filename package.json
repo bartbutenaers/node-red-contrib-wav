@@ -1,0 +1,25 @@
+{
+    "name"         : "node-red-contrib-wav-headers",
+    "version"      : "1.0.0",
+    "description"  : "A Node Red node to add WAV headers to PCM audio chunks",
+    "dependencies": {
+    },
+    "author": {
+        "name": "Bart Butenaers"
+    },
+    "license": "Apache-2.0",
+    "keywords": [ "node-red", "pcm", "wav", "audio", "stream", "streaming", "sound", "headers", "chunks" ],
+    "bugs": {
+        "url": "https://github.com/bartbutenaers/node-red-contrib-wav-headers/issues"
+    },
+    "homepage": "https://github.com/bartbutenaers/node-red-contrib-wav-headers",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bartbutenaers/node-red-contrib-wav-headers.git"
+    },
+    "node-red"     : {
+        "nodes": {
+            "wav-headers": "wav_headers.js"
+        }
+    }
+}
