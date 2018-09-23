@@ -10,7 +10,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<script type="text/x-red" data-template-name="sse-client">
+<script type="text/x-red" data-template-name="wav-headers">
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> channels</label>
         <input type="number" id="node-input-channels" placeholder="1">
@@ -31,7 +31,7 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('sse-client', {
+    RED.nodes.registerType('wav-headers', {
         category: 'input',
         color:    'rgb(231, 231, 174)',
         defaults: {
@@ -49,6 +49,6 @@
     });
 </script>
 
-<script type="text/x-red" data-help-name="sse-client">
+<script type="text/x-red" data-help-name="wav-headers">
     <p>A Node Red node to add WAV headers to PCM audio chunks.</p>
 </script>
