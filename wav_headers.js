@@ -25,24 +25,22 @@ module.exports = function(RED) {
         var node = this;
     
         node.on("input", function(msg) {
-            var fileBodyBuffer = msg.payload || new Buffer();
-      
-            // The message payload should be a buffer
-            if (!Buffer.isBuffer(fileBodyBuffer)) {
+            // The message payload should be a buffer (containing an audio chunk of PCM audio samples)
+            if (!Buffer.isBuffer(msg.payload)) {
                 return;
             }
     
             var options = { channels  : node.channels,
                             sampleRate: node.sampleRate,
                             bitDepth  : node.bitDepth,
-                            dataLength: fileBodyBuffer
+                            dataLength: msg.payload
             };
  
             // Create a WAV headers buffer, based on the specified options
             var headersBuffer = wavHeaders(options);
       
             // Store a 'full' buffer in the message payload.
-            msg.payload = Buffer.concat([ headersBuffer, fileBodyBuffer ]);
+            msg.payload = Buffer.concat([ headersBuffer, msg.payload ]);
 
             node.send(msg);
         });
