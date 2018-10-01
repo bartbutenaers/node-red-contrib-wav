@@ -33,7 +33,7 @@ module.exports = function(RED) {
             var options = { channels  : node.channels,
                             sampleRate: node.sampleRate,
                             bitDepth  : node.bitDepth,
-                            dataLength: msg.payload
+                            dataLength: msg.payload.length
             };
  
             // Create a WAV headers buffer, based on the specified options
