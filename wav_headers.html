@@ -12,14 +12,21 @@
 -->
 <script type="text/x-red" data-template-name="wav-headers">
     <div class="form-row">
+        <label for="node-input-action"><i class="fa fa-wrench"></i> Action</label>
+        <select id="node-input-action">
+            <option value='add'>Add</option>
+            <option value='del'>Delete</option>
+        </select>
+    </div>
+    <div class="form-row actionAdd-row">
         <label for="node-input-name"><i class="icon-tag"></i> channels</label>
         <input type="number" id="node-input-channels" placeholder="1">
     </div>
-    <div class="form-row">
+    <div class="form-row actionAdd-row">
         <label for="node-input-samplerate"><i class="icon-tag"></i> rate</label>
         <input type="number" id="node-input-samplerate" placeholder="22050">
     </div>
-    <div class="form-row">
+    <div class="form-row actionAdd-row">
         <label for="node-input-bitwidth"><i class="icon-tag"></i> bitwidth</label>
         <input type="number" id="node-input-bitwidth" placeholder="16">
     </div>
@@ -32,10 +39,11 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('wav-headers', {
-        category: 'audio',
+        category: 'input',
         color:    'rgb(178, 102, 255)',
         defaults: {
             name: {value: ""},
+            action: {value: "add"},
             channels: {value: 1},
             samplerate: {value: 22050},
             bitwidth: {value: 16}
@@ -45,10 +53,20 @@
         icon: "wav.png",
         label: function() {
             return this.name || "WAV headers";
-        }
+        },
+        oneditprepare: function() { 
+            function showHideTableElements() {
+                var action = $("#node-input-action").val();
+                
+                if (action === "del") {
+                    // Hide all rows that are required to 'add' headers
+                    $(".actionAdd-row").hide();
+                }                     
+            }
+        },
     });
 </script>
 
 <script type="text/x-red" data-help-name="wav-headers">
-    <p>A Node Red node to add WAV headers to PCM audio chunks.</p>
+    <p>A Node Red node to add WAV headers to PCM audio chunks, or remove those headers.</p>
 </script>
