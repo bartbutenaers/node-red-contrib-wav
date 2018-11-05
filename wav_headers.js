@@ -21,6 +21,7 @@ module.exports = function(RED) {
         this.channels   = config.channels || 1;
 		this.sampleRate = config.samplerate || 22050;
         this.bitDepth   = config.bitwidth || 16;
+        this.action     = config.action || "add";
     
         var node = this;
     
@@ -30,17 +31,23 @@ module.exports = function(RED) {
                 return;
             }
     
-            var options = { channels  : node.channels,
-                            sampleRate: node.sampleRate,
-                            bitDepth  : node.bitDepth,
-                            dataLength: msg.payload.length
-            };
- 
-            // Create a WAV headers buffer, based on the specified options
-            var headersBuffer = wavHeaders(options);
-      
-            // Store a 'full' buffer in the message payload.
-            msg.payload = Buffer.concat([ headersBuffer, msg.payload ]);
+            if (node.action === "add") {
+                var options = { channels  : node.channels,
+                                sampleRate: node.sampleRate,
+                                bitDepth  : node.bitDepth,
+                                dataLength: msg.payload
+                };
+     
+                // Create a WAV headers buffer, based on the specified options
+                var headersBuffer = wavHeaders(options);
+          
+                // Store a 'full' buffer in the message payload.
+                msg.payload = Buffer.concat([ headersBuffer, msg.payload ]);
+            }
+            else {
+                // The headers consist out of 44 bytes, so let's remove those
+                msg.payload = msg.payload.slice(45);
+            }
 
             node.send(msg);
         });
