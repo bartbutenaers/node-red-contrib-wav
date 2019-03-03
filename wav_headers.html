@@ -14,8 +14,9 @@
     <div class="form-row">
         <label for="node-input-action"><i class="fa fa-wrench"></i> Action</label>
         <select id="node-input-action">
-            <option value='add'>Add</option>
-            <option value='del'>Delete</option>
+            <option value='add'>Add WAV headers</option>
+            <option value='del'>Remove WAV headers</option>
+            <option value='get'>Get WAV headers</option>
         </select>
     </div>
     <div class="form-row actionAdd-row">
@@ -44,29 +45,87 @@
         defaults: {
             name: {value: ""},
             action: {value: "add"},
-            channels: {value: 1},
-            samplerate: {value: 22050},
-            bitwidth: {value: 16}
+            channels: {value: 1, validate:function(v) {
+                // This value is only mandatory when headers need to be added
+                return v || $("#node-input-action").val() !== "add";
+            }},
+            samplerate: {value: 22050, validate:function(v) {
+                // This value is only mandatory when headers need to be added
+                return v || $("#node-input-action").val() !== "add";
+            }},
+            bitwidth: {value: 16, validate:function(v) {
+                // This value is only mandatory when headers need to be added
+                return v || $("#node-input-action").val() !== "add";
+            }}
         },
         inputs: 1,
-        outputs: 1,
+        outputs: 2,
         icon: "wav.png",
+        inputLabels: function(index) {
+            if (this.action === "add") {
+                return "Raw audio buffer (PCM)";
+            }
+            else {
+                return "WAV buffer";
+            }
+        },
+        outputLabels: function(index) {
+            if (index === 0) {
+                if (this.action === "add" || this.action === "get") {
+                    return "WAV buffer";
+                }
+                else {
+                    return "Raw audio buffer (PCM)";
+                }
+            }
+            else {
+                switch (this.action) {
+                    case "add":
+                        return "Added WAV headers";
+                    case "del":
+                        return "Removed WAV headers";
+                    case "get":
+                        return "Available WAV headers";
+                }            
+            }
+        },
         label: function() {
-            return this.name || "WAV headers";
+            if (this.name) {
+                return this.name;
+            }
+        
+            switch (this.action) {
+                case "add":
+                    return "Add WAV headers";
+                case "del":
+                    return "Remove WAV headers";
+                case "get":
+                    return "Get WAV headers";
+            }  
         },
         oneditprepare: function() { 
-            function showHideTableElements() {
+            // The input fields should only be displayed when the 'ADD' action is selected
+            $("#node-input-action").change(function() {
                 var action = $("#node-input-action").val();
                 
-                if (action === "del") {
-                    // Hide all rows that are required to 'add' headers
+                if (action === "add") {
+                    $(".actionAdd-row").show();
+                }
+                else {
                     $(".actionAdd-row").hide();
-                }                     
-            }
+                }
+            });
         },
     });
 </script>
 
 <script type="text/x-red" data-help-name="wav-headers">
-    <p>A Node Red node to add WAV headers to PCM audio chunks, or remove those headers.</p>
+    <p>A Node Red node to handle WAV headers.</p>
+    <p>Following actions are supported:
+        <ul>
+            <li><strong>Add WAV headers:</strong> the <code>msg.payload</code> should contain a chunk of raw audio samples (PCM), to which the WAV headers will be added (in front).</li>
+            <li><strong>Remove WAV headers:</strong> the <code>msg.payload</code> should contain a WAV buffer, from which the WAV headers will be removed.  So only the raw audio samples (PCM) will arrive on the output.</li>
+            <li><strong>Get WAV headers:</strong> the <code>msg.payload</code> should contain a WAV buffer, from which the WAV headers will be read. The original input message will be send untouched on the output.</li>
+        </ul>
+    </p>
 </script>
