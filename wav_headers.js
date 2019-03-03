@@ -18,38 +18,128 @@ module.exports = function(RED) {
 
 	function WavHeadersNode(config) {
 		RED.nodes.createNode(this, config);
-        this.channels   = config.channels || 1;
+        this.channels   = config.channels   || 1;
 		this.sampleRate = config.samplerate || 22050;
-        this.bitDepth   = config.bitwidth || 16;
-        this.action     = config.action || "add";
+        this.bitDepth   = config.bitwidth   || 16;
+        this.action     = config.action     || "add";
     
         var node = this;
+        
+        // Reads slice from a buffer as string
+        function readText(headerBuffer) {
+            var str = '';
+            for(var i = 0; i < headerBuffer.length; i++) {
+                str += String.fromCharCode(headerBuffer[i]);
+            }
+            return str;
+        }
+
+        // Read slice from buffer as Decimal
+        function readDecimal(headerBuffer) {
+            var sum = 0;
+            for(var i = 0; i < headerBuffer.length; i++)
+                sum |= headerBuffer[i] << (i*8);
+            return sum;
+        }
+        
+        // Parse the WAV headers from a buffer
+        function parseWavHeaders(headerBuffer) { 
+            var headers = {};
+            
+            headers.chunkID       = readText(headerBuffer.slice(0, 3));
+            headers.chunkSize     = readDecimal(headerBuffer.slice(4, 7));
+            headers.format        = readText(headerBuffer.slice(8, 11));
+            headers.compression   = readDecimal(headerBuffer.slice(20, 21));
+            headers.numChannels   = readDecimal(headerBuffer.slice(22, 23)); 
+            headers.sampleRate    = readDecimal(headerBuffer.slice(24, 27)); 
+            headers.byteRate      = readDecimal(headerBuffer.slice(28, 31)); 
+            headers.blockAlign    = readDecimal(headerBuffer.slice(32, 33)); 
+            headers.bitsPerSample = readDecimal(headerBuffer.slice(34, 35));
+            
+            return headers;
+        }
     
         node.on("input", function(msg) {
+            var msg2 = {};
+            
             // The message payload should be a buffer (containing an audio chunk of PCM audio samples)
             if (!Buffer.isBuffer(msg.payload)) {
+                console.log("WAV audio should be delivered as a buffer in the msg.payload");
                 return;
             }
     
-            if (node.action === "add") {
-                var options = { channels  : node.channels,
-                                sampleRate: node.sampleRate,
-                                bitDepth  : node.bitDepth,
-                                dataLength: msg.payload
-                };
-     
-                // Create a WAV headers buffer, based on the specified options
-                var headersBuffer = wavHeaders(options);
-          
-                // Store a 'full' buffer in the message payload.
-                msg.payload = Buffer.concat([ headersBuffer, msg.payload ]);
-            }
-            else {
-                // The headers consist out of 44 bytes, so let's remove those
-                msg.payload = msg.payload.slice(45);
+            switch (node.action) {
+                case "add":
+                    var options = { channels  : node.channels,
+                                    sampleRate: node.sampleRate,
+                                    bitDepth  : node.bitDepth,
+                                    dataLength: msg.payload
+                    };
+         
+                    // Create a WAV headers buffer, based on the specified options
+                    var headersBuffer = wavHeaders(options);
+              
+                    // Store a 'full' buffer in the message payload.
+                    msg.payload = Buffer.concat([ headersBuffer, msg.payload ]);
+                    
+                    // Show the added headers on the second output
+                    msg2.payload = options;
+                    
+                    break;
+                    
+                case "del":
+                    // Wav headers are normally 44 bytes long, but wav headers can some optional header information.
+                    // Therefore we cannot simple remove the first 44 bytes.  Instead it is better to search for the Subchunk2ID:
+                    //    <wav headers>
+                    //    Subchunk2ID : this is the constant text 'data'
+                    //    Subchunk2Size : total number of bytes that the audio samples consist of (Subchunk2Size number is 4 bytes long)
+                    //    <audio samples>
+                    // So we will scan the buffer for the 'data' and then start reading audio samples 4 bytes after that...
+                    var index = msg.payload.indexOf("data");
+                    
+                    if (index === -1) {
+                        console.log("Cannot determine end of WAV headers, due to missing Subchunk2ID");
+                        return;
+                    }
+                    
+                    // Skip the Subchunk2Size (4 bytes long) and the text 'data' itself (4 bytes long)
+                    index += 8;
+                    
+                    if (index > msg.payload.length) {
+                        console.log("End of WAV headers found, but no audio samples available in msg.payload");
+                        return;                   
+                    }
+                    
+                    // Get a copy of the WAV headers for the second output
+                    var headerBuffer = Buffer.from(msg.payload.slice(0, index));
+                    
+                    // Remove the WAV headers, and send a payload containing only the real audio samples
+                    msg.payload = msg.payload.slice(index);
+                    
+                    // Show the (human readable) WAV headers on the second output
+                    msg2.payload = parseWavHeaders(headerBuffer);
+                    
+                    break;
+                    
+                case "get":
+                    // See explanation above ...
+                    var index = msg.payload.indexOf("data");
+                    
+                    if (index === -1) {
+                        console.log("Cannot determine end of WAV headers, due to missing Subchunk2ID");
+                        return;
+                    }
+                    
+                    // Get a copy of the WAV headers for the second output
+                    var headerBuffer = Buffer.from(msg.payload.slice(0, index));
+                    
+                    // Show the (human readable) WAV headers on the second output
+                    msg2.payload = parseWavHeaders(headerBuffer);
+                    
+                    break;
             }
 
-            node.send(msg);
+            node.send([msg, msg2]);
         });
     }
   
