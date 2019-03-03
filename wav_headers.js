@@ -46,15 +46,15 @@ module.exports = function(RED) {
         function parseWavHeaders(headerBuffer) { 
             var headers = {};
             
-            headers.chunkID       = readText(headerBuffer.slice(0, 3));
-            headers.chunkSize     = readDecimal(headerBuffer.slice(4, 7));
-            headers.format        = readText(headerBuffer.slice(8, 11));
-            headers.compression   = readDecimal(headerBuffer.slice(20, 21));
-            headers.numChannels   = readDecimal(headerBuffer.slice(22, 23)); 
-            headers.sampleRate    = readDecimal(headerBuffer.slice(24, 27)); 
-            headers.byteRate      = readDecimal(headerBuffer.slice(28, 31)); 
-            headers.blockAlign    = readDecimal(headerBuffer.slice(32, 33)); 
-            headers.bitsPerSample = readDecimal(headerBuffer.slice(34, 35));
+            headers.chunkID       = readText(headerBuffer.slice(0, 4));
+            headers.chunkSize     = readDecimal(headerBuffer.slice(4, 8));
+            headers.format        = readText(headerBuffer.slice(8, 12));
+            headers.compression   = readDecimal(headerBuffer.slice(20, 22));
+            headers.numChannels   = readDecimal(headerBuffer.slice(22, 24)); 
+            headers.sampleRate    = readDecimal(headerBuffer.slice(24, 28)); 
+            headers.byteRate      = readDecimal(headerBuffer.slice(28, 32)); 
+            headers.blockAlign    = readDecimal(headerBuffer.slice(32, 34)); 
+            headers.bitsPerSample = readDecimal(headerBuffer.slice(34, 36));
             
             return headers;
         }
@@ -73,7 +73,7 @@ module.exports = function(RED) {
                     var options = { channels  : node.channels,
                                     sampleRate: node.sampleRate,
                                     bitDepth  : node.bitDepth,
-                                    dataLength: msg.payload
+                                    dataLength: msg.payload.length
                     };
          
                     // Create a WAV headers buffer, based on the specified options
@@ -102,16 +102,16 @@ module.exports = function(RED) {
                         return;
                     }
                     
-                    // Skip the Subchunk2Size (4 bytes long) and the text 'data' itself (4 bytes long)
+                    // Get a copy of the WAV headers for the second output
+                    var headerBuffer = Buffer.from(msg.payload.slice(0, index));
+                    
+                    // Skip the Subchunk2ID (4 bytes long) and also the Subchunk2Size (4 bytes long)
                     index += 8;
                     
                     if (index > msg.payload.length) {
                         console.log("End of WAV headers found, but no audio samples available in msg.payload");
                         return;                   
                     }
-                    
-                    // Get a copy of the WAV headers for the second output
-                    var headerBuffer = Buffer.from(msg.payload.slice(0, index));
                     
                     // Remove the WAV headers, and send a payload containing only the real audio samples
                     msg.payload = msg.payload.slice(index);
