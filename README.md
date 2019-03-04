@@ -11,22 +11,26 @@ npm install node-red-contrib-wav
 Depending on the input, this node can perform 3 different type of actions.  All input and output data will be available in ```msg.payload```.
 
 ### Get WAV headers
-When the input is a WAV audio fragment, this option can be used to get the WAV headers (on the second output).  On the first output, the untouched input message will be passed through.  This is useful to get information about the audio samples:
+When the input is a WAV audio fragment, this option can be used to get the WAV headers (on the second output).  On the first output, the untouched input message will be passed through.  
+
+This option is useful to get information about the audio samples:
 
 ![Debug panel](/images/wav_headers_debug.png)
 
 ### Remove WAV headers
-When the input is a WAV audio fragment, this option can be used to remove the WAV headers.  On the first output, the audio chunk with raw audio samples will appear (i.e. the WAV audio without the WAV headers).  On the second output, the removed WAV headers will be send.
+When the input is a WAV audio fragment, this option can be used to remove the WAV headers.  On the first output, the audio chunk with raw audio samples will appear (i.e. without the WAV headers).  On the second output, the removed WAV headers will be send.
 
 ### Add WAV headers
-When the input are raw audio samples (PCM), this option can be used to add WAV headers.  On the first output, the WAV audio fragment will appear (i.e. the WAV headers followed by the raw audio samples).  On the second output, the added WAV headers will be send.
+When the input is a chunk of raw audio samples (PCM), this option can be used to add WAV headers.  On the first output, the WAV audio fragment will appear (i.e. the WAV headers followed by the raw audio samples).  On the second output, the added WAV headers will be send.
 
 Some Node-RED nodes (e.g. node-red-contrib-micropi) inject chunks of raw audio samples into the Node-RED flow.  However such a ***raw audio chunk doesn't contain any information about the content of the bytes***!  This means that other nodes (e.g. the Dashboard audio-out node) don't know how to process these audio samples, since they don't know what the data represents.
 
-In that case this node can add all required information to the raw audio samples, by adding **WAV headers** to the audio chunk:
+In that case this node can add all required information to the raw audio samples, by adding **WAV headers** to the audio chunk.  All the required information can be specified in the node's config screen:
 + The number of **channels**: is it a single channel recording or multiple channels (left microphone and right microphone).
 + The sample **rate**: i.e. the number of audio samples per second.
 + The bit width: i.e. the number of bits of each audio sample.  Are we dealing with 8-bit samples (1 byte), or 16-bit samples (2 bytes) ...
+
+The conversion from PCM to WAV is explained in the following figure:
 
 ![Microphone flow](/images/wav_headers_flow.png)
 
