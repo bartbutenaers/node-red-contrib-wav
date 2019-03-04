@@ -1,27 +1,46 @@
 # node-red-contrib-wav-headers
-A Node Red node to add WAV headers to PCM audio chunks
+A Node Red node to handle WAV audio.
 
 ## Install
 Run the following npm command in your Node-RED user directory (typically ~/.node-red):
 ```
-npm install node-red-contrib-wav-headers
+npm install node-red-contrib-wav
 ```
 
 ## Usage
-Some Node-RED blocks can inject chunks of audio samples into the Node-RED flow.  In some cases (e.g. node-red-contrib-micropi) this will be raw audio (PCM), which is a Buffer of bytes representing the amplitudes of the audio samples. However such a ***raw audio chunk doesn't contain any information about the content of the bytes***!
+Depending on the input, this node can perform 3 different type of actions.  All input and output data will be available in ```msg.payload```.
 
-This node can be used to add this kind of information to the raw audio samples, by adding **WAV headers** to the audio chunk:
+### Get WAV headers
+When the input is a WAV audio fragment, this option can be used to get the WAV headers (on the second output).  On the first output, the untouched input message will be passed through.  This is useful to get information about the audio samples:
+
+![Debug panel](/images/wav_headers_debug.png)
+
+### Remove WAV headers
+When the input is a WAV audio fragment, this option can be used to remove the WAV headers.  On the first output, the audio chunk with raw audio samples will appear (i.e. the WAV audio without the WAV headers).  On the second output, the removed WAV headers will be send.
+
+### Add WAV headers
+When the input are raw audio samples (PCM), this option can be used to add WAV headers.  On the first output, the WAV audio fragment will appear (i.e. the WAV headers followed by the raw audio samples).  On the second output, the added WAV headers will be send.
+
+Some Node-RED nodes (e.g. node-red-contrib-micropi) inject chunks of raw audio samples into the Node-RED flow.  However such a ***raw audio chunk doesn't contain any information about the content of the bytes***!  This means that other nodes (e.g. the Dashboard audio-out node) don't know how to process these audio samples, since they don't know what the data represents.
+
+In that case this node can add all required information to the raw audio samples, by adding **WAV headers** to the audio chunk:
 + The number of **channels**: is it a single channel recording or multiple channels (left microphone and right microphone).
 + The sample **rate**: i.e. the number of audio samples per second.
 + The bit width: i.e. the number of bits of each audio sample.  Are we dealing with 8-bit samples (1 byte), or 16-bit samples (2 bytes) ...
 
-The `msg.payload` of the input message contains audio data, and the `msg.payload` of the output message contains a WAV container (i.e. both headers and audio data):
+![Microphone flow](/images/wav_headers_flow.png)
 
-![Example flow](https://raw.githubusercontent.com/bartbutenaers/node-red-contrib-wav-headers/master/images/wav_headers_flow.png)
+## Example flow
+The following example downloads a WAV file, removes the WAV headers and afterwards adds the WAV headers again:
+
+![Example flow](/images/wav_headers_example.png)
+
 ```
-[{"id":"ab6fb878.b001b8","type":"microphone","z":"279b8956.27dfe6","name":"microphone","endian":"little","bitwidth":"16","encoding":"signed-integer","channels":"1","rate":"22050","silence":"60","debug":false,"active":true,"x":950,"y":1000,"wires":[["c27f2983.6bf2b8"]]},{"id":"c27f2983.6bf2b8","type":"wav-headers","z":"279b8956.27dfe6","name":"","channels":1,"samplerate":22050,"bitwidth":16,"x":1136,"y":1000,"wires":[["ee8cf749.22e888"]]},{"id":"ee8cf749.22e888","type":"ui_audio","z":"279b8956.27dfe6","name":"","group":"180d570c.93b059","voice":"0","always":false,"x":1320,"y":1000,"wires":[]},{"id":"180d570c.93b059","type":"ui_group","z":"","name":"Devices","tab":"493cf398.76af9c","order":2,"disp":false,"width":"6"},{"id":"493cf398.76af9c","type":"ui_tab","z":"","name":"Ratby Road","icon":"dashboard"}]
+[{"id":"fca71b54.9c2998","type":"wav-headers","z":"95744d6c.fa339","name":"","action":"del","channels":"1","samplerate":"22050","bitwidth":"16","x":1020,"y":160,"wires":[["283a2469.04320c"],["1bae03de.11688c"]]},{"id":"70c2683f.97bfa8","type":"http request","z":"95744d6c.fa339","name":"Download WAV file","method":"GET","ret":"bin","paytoqs":false,"url":"https://www.pacdv.com/sounds/voices/open-the-goddamn-door.wav","tls":"","proxy":"","authType":"basic","x":790,"y":160,"wires":[["fca71b54.9c2998"]]},{"id":"c76a87e2.776f18","type":"inject","z":"95744d6c.fa339","name":"Start test","topic":"","payload":"","payloadType":"date","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":600,"y":160,"wires":[["70c2683f.97bfa8"]]},{"id":"220e4392.43238c","type":"play audio","z":"95744d6c.fa339","name":"","voice":"0","x":1510,"y":160,"wires":[]},{"id":"283a2469.04320c","type":"wav-headers","z":"95744d6c.fa339","name":"","action":"add","channels":"2","samplerate":"44100","bitwidth":"16","x":1270,"y":160,"wires":[["220e4392.43238c"],["7de3311e.2d433"]]},{"id":"7de3311e.2d433","type":"debug","z":"95744d6c.fa339","name":"Added headers","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","x":1520,"y":200,"wires":[]},{"id":"1bae03de.11688c","type":"debug","z":"95744d6c.fa339","name":"Removed headers","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","x":1270,"y":200,"wires":[]}]
 ```
-If we wouldn't add the WAV headers in this example flow, the receiver wouldn't know what kind of information is contained in the audio bytes arriving.  In this example the audio-out node (of the Node-RED dashboard) would not be able to play the PCM audio samples, since the browser would raise an audio decoding exception ...
+Remark: this flow makes use of the *node-red-contrib-play-audio*, so you will need to install that to test the flow.
+
+This example is purely theoretical, to demonstrate both actions.  But the main idea is that e.g. the node-red-contrib-play-audio node requires the WAV headers, since the browser (where the flow editor is displayed) can only play the audio samples when he has all the required information about the samples ...
 
 ## More detailed
 This section is only required if you want to learn more details of what this node is doing behind the scenes.  That might be interesting if you are running in troubles, and you have to do some troubleshooting ...
@@ -30,7 +49,7 @@ This section is only required if you want to learn more details of what this nod
 
 This is how digital audio works in a nutshell:
 
-![Audio basics](https://raw.githubusercontent.com/bartbutenaers/node-red-contrib-wav-headers/master/images/wav_headers_basics.png)
+![Audio basics](/images/wav_headers_basics.png)
 
 1. When you speak, sound waves travel through air.
 2. The microphone's membrane starts vibrating (from it's center position at rest backwards and forwards). 
@@ -39,7 +58,7 @@ This is how digital audio works in a nutshell:
 3. This vibration results in an electrical wave.  When the membrane goes forwards (from it's center position), the electrical wave is going up too.  When the membrane goes backwards, the electrical wave is going down too.
 4. The height (*amplitude*) of the wave is measured at regular time intervals, which is called *sampling*.  The *sample rate* is the number of samples per second, e.g. for CDs a sample rate of 44100 Hz  is used.  How higher the sample rate, how better our sound quality will become (but the more cpu and memory will be needed).  In case of e.g. 2 channels (left and right), a sample contains the bytes of both channels:
 
-    ![Audio channels](https://raw.githubusercontent.com/bartbutenaers/node-red-contrib-wav-headers/master/images/wav_headers_channels.png)
+    ![Audio channels](/images/wav_headers_channels.png)
   
 5. During *quantization* each of those analog voltage values is converted to the nearest ***byte value***.   The more bits (8, 16, 24 , 32) are used, the better our digital audio signal will approximate the original analog signal (but the more cpu and memory will be needed).  
 6. The result will be an endless byte stream, containing digital sample values.  This audio format is called **PCM** (Pulse Code Modulation), which is most of the time uncompressed.
@@ -55,4 +74,4 @@ WAV (Waveform Audio File Format) is a file format for storing audio.  A WAV chun
 
 This node receives a the data as a Buffer of bytes, containing PCM audio samples.  Then a new Buffer will be created containing all the WAV headers, and both buffers will be merged resulting in one large Buffer:
 
-![WAV headers](https://raw.githubusercontent.com/bartbutenaers/node-red-contrib-wav-headers/master/images/wav_headers_table.png)
+![WAV headers](/images/wav_headers_table.png)
