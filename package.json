@@ -1,6 +1,6 @@
 {
     "name"         : "node-red-contrib-wav",
-    "version"      : "C",
+    "version"      : "1.0.0",
     "description"  : "A Node Red node to handle WAV audio",
     "dependencies": {
         "wav-headers": "1.0.1"
