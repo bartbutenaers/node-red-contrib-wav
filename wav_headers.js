@@ -136,6 +136,12 @@ module.exports = function(RED) {
                     // Show the (human readable) WAV headers on the second output
                     msg2.payload = parseWavHeaders(headerBuffer);
                     
+                    // Calculate the wav duration
+                    msg2.payload.duration = msg2.payload.chunkSize / (msg2.payload.sampleRate * msg2.payload.numChannels * (msg2.payload.bitsPerSample / 8));
+                    
+                    // Round the duration to two decimals
+                    msg2.payload.duration = Math.round(msg2.payload.duration * 100) / 100
+                    
                     break;
             }
 
