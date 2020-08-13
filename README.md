@@ -7,6 +7,12 @@ Run the following npm command in your Node-RED user directory (typically ~/.node
 npm install node-red-contrib-wav
 ```
 
+## Support my Node-RED developments
+
+Please buy my wife a coffee to keep her happy, while I am busy developing Node-RED stuff for you ...
+
+<a href="https://www.buymeacoffee.com/bartbutenaers" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy my wife a coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+
 ## Usage
 Depending on the input, this node can perform 3 different type of actions.  All input and output data will be available in ```msg.payload```.
 
@@ -15,7 +21,9 @@ When the input is a WAV audio fragment, this option can be used to get the WAV h
 
 This option is useful to get information about the audio samples:
 
-![Debug panel](/images/wav_headers_debug.png)
+![Debug panel](https://user-images.githubusercontent.com/14224149/90100451-0253a080-dd3d-11ea-86f8-4c3ef55b32b6.png)
+
+Note that the `duration` field is a *calculated field* (based on the WAV header information), to supply the duration of the WAV chunk in seconds.
 
 ### Remove WAV headers
 When the input is a WAV audio fragment, this option can be used to remove the WAV headers.  On the first output, the audio chunk with raw audio samples will appear (i.e. without the WAV headers).  On the second output, the removed WAV headers will be send.
